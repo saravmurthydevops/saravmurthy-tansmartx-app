@@ -1,0 +1,552 @@
+{
+  "providers": {
+    "AWS": {
+      "categories": {
+        "Compute": [
+          {
+            "name": "EC2",
+            "description": "Elastic virtual machines for AWS workloads.",
+            "tags": [
+              "t3",
+              "m6i",
+              "c6i"
+            ],
+            "starting_monthly": "$86+",
+            "starting_hourly": "$0.12+",
+            "options": {
+              "families": [
+                "t3",
+                "m6i",
+                "c6i"
+              ],
+              "regions": [
+                "ap-southeast-1",
+                "us-east-1"
+              ]
+            }
+          },
+          {
+            "name": "ECS",
+            "description": "Managed containers on AWS.",
+            "tags": [
+              "containers",
+              "managed"
+            ],
+            "starting_monthly": "$94+",
+            "starting_hourly": "$0.13+",
+            "options": {
+              "launch_types": [
+                "Fargate",
+                "EC2"
+              ]
+            }
+          },
+          {
+            "name": "Lambda",
+            "description": "Event-driven serverless compute.",
+            "tags": [
+              "serverless",
+              "events"
+            ],
+            "starting_monthly": "Usage-based",
+            "starting_hourly": "Usage-based",
+            "options": {
+              "runtime": [
+                "Python",
+                "Node.js"
+              ]
+            }
+          }
+        ],
+        "Storage": [
+          {
+            "name": "S3",
+            "description": "Object storage for files and backups.",
+            "tags": [
+              "standard",
+              "archive"
+            ],
+            "starting_monthly": "$10+",
+            "starting_hourly": "$0.01+",
+            "options": {
+              "tiers": [
+                "Standard",
+                "IA",
+                "Glacier"
+              ]
+            }
+          },
+          {
+            "name": "EBS",
+            "description": "Persistent block storage for EC2.",
+            "tags": [
+              "gp3",
+              "io2"
+            ],
+            "starting_monthly": "$12+",
+            "starting_hourly": "$0.02+",
+            "options": {
+              "types": [
+                "gp3",
+                "io2"
+              ]
+            }
+          }
+        ],
+        "Database": [
+          {
+            "name": "RDS",
+            "description": "Managed relational databases.",
+            "tags": [
+              "mysql",
+              "postgres"
+            ],
+            "starting_monthly": "$42+",
+            "starting_hourly": "$0.06+",
+            "options": {
+              "engines": [
+                "MySQL",
+                "PostgreSQL"
+              ]
+            }
+          },
+          {
+            "name": "DynamoDB",
+            "description": "Serverless NoSQL database.",
+            "tags": [
+              "nosql",
+              "kv"
+            ],
+            "starting_monthly": "$28+",
+            "starting_hourly": "$0.04+",
+            "options": {
+              "modes": [
+                "On-demand",
+                "Provisioned"
+              ]
+            }
+          }
+        ],
+        "Networking": [
+          {
+            "name": "VPC",
+            "description": "AWS network foundation.",
+            "tags": [
+              "subnets",
+              "routing"
+            ],
+            "starting_monthly": "Varies",
+            "starting_hourly": "Varies",
+            "options": {
+              "components": [
+                "Subnets",
+                "Route tables"
+              ]
+            }
+          },
+          {
+            "name": "ALB",
+            "description": "Application load balancer.",
+            "tags": [
+              "http",
+              "routing"
+            ],
+            "starting_monthly": "$18+",
+            "starting_hourly": "$0.03+",
+            "options": {
+              "protocols": [
+                "HTTP",
+                "HTTPS"
+              ]
+            }
+          }
+        ],
+        "AI / ML": [
+          {
+            "name": "SageMaker",
+            "description": "Managed ML platform.",
+            "tags": [
+              "ml",
+              "training"
+            ],
+            "starting_monthly": "$55+",
+            "starting_hourly": "$0.08+",
+            "options": {
+              "modes": [
+                "Notebook",
+                "Training",
+                "Endpoint"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "Azure": {
+      "categories": {
+        "Compute": [
+          {
+            "name": "Virtual Machines",
+            "description": "Azure VM platform for business workloads.",
+            "tags": [
+              "b-series",
+              "d-series"
+            ],
+            "starting_monthly": "$92+",
+            "starting_hourly": "$0.13+",
+            "options": {
+              "families": [
+                "B-series",
+                "Dsv5",
+                "Esv5"
+              ],
+              "regions": [
+                "Southeast Asia",
+                "East Asia"
+              ]
+            }
+          },
+          {
+            "name": "AKS",
+            "description": "Managed Kubernetes service.",
+            "tags": [
+              "kubernetes",
+              "containers"
+            ],
+            "starting_monthly": "$96+",
+            "starting_hourly": "$0.13+",
+            "options": {
+              "modes": [
+                "Managed",
+                "Node pools"
+              ]
+            }
+          },
+          {
+            "name": "Functions",
+            "description": "Event-driven serverless compute.",
+            "tags": [
+              "serverless",
+              "events"
+            ],
+            "starting_monthly": "Usage-based",
+            "starting_hourly": "Usage-based",
+            "options": {
+              "plans": [
+                "Consumption",
+                "Premium"
+              ]
+            }
+          }
+        ],
+        "Storage": [
+          {
+            "name": "Blob Storage",
+            "description": "Scalable object storage.",
+            "tags": [
+              "hot",
+              "cool",
+              "archive"
+            ],
+            "starting_monthly": "$11+",
+            "starting_hourly": "$0.02+",
+            "options": {
+              "tiers": [
+                "Hot",
+                "Cool",
+                "Archive"
+              ]
+            }
+          },
+          {
+            "name": "Managed Disks",
+            "description": "Persistent disks for Azure VMs.",
+            "tags": [
+              "ssd",
+              "premium"
+            ],
+            "starting_monthly": "$11+",
+            "starting_hourly": "$0.02+",
+            "options": {
+              "types": [
+                "Standard SSD",
+                "Premium SSD"
+              ]
+            }
+          }
+        ],
+        "Database": [
+          {
+            "name": "Azure SQL Database",
+            "description": "Managed SQL platform.",
+            "tags": [
+              "sql",
+              "managed"
+            ],
+            "starting_monthly": "$38+",
+            "starting_hourly": "$0.05+",
+            "options": {
+              "tiers": [
+                "Basic",
+                "Standard",
+                "Premium"
+              ]
+            }
+          },
+          {
+            "name": "Cosmos DB",
+            "description": "Globally distributed NoSQL database.",
+            "tags": [
+              "nosql",
+              "global"
+            ],
+            "starting_monthly": "$46+",
+            "starting_hourly": "$0.06+",
+            "options": {
+              "apis": [
+                "SQL",
+                "MongoDB"
+              ]
+            }
+          }
+        ],
+        "Networking": [
+          {
+            "name": "Virtual Network",
+            "description": "Azure network foundation.",
+            "tags": [
+              "vnet",
+              "routing"
+            ],
+            "starting_monthly": "Varies",
+            "starting_hourly": "Varies",
+            "options": {
+              "components": [
+                "Subnets",
+                "NSG",
+                "Route Table"
+              ]
+            }
+          },
+          {
+            "name": "Application Gateway",
+            "description": "L7 application delivery and WAF.",
+            "tags": [
+              "waf",
+              "gateway"
+            ],
+            "starting_monthly": "$24+",
+            "starting_hourly": "$0.03+",
+            "options": {
+              "modes": [
+                "Standard_v2",
+                "WAF_v2"
+              ]
+            }
+          }
+        ],
+        "AI / ML": [
+          {
+            "name": "Azure Machine Learning",
+            "description": "Managed ML workspace and deployment.",
+            "tags": [
+              "ml",
+              "workspace"
+            ],
+            "starting_monthly": "$50+",
+            "starting_hourly": "$0.07+",
+            "options": {
+              "capabilities": [
+                "Training",
+                "Endpoints"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "GCP": {
+      "categories": {
+        "Compute": [
+          {
+            "name": "Compute Engine",
+            "description": "Virtual machines for GCP workloads.",
+            "tags": [
+              "e2",
+              "n2",
+              "c3"
+            ],
+            "starting_monthly": "$84+",
+            "starting_hourly": "$0.11+",
+            "options": {
+              "families": [
+                "E2",
+                "N2",
+                "C3"
+              ],
+              "regions": [
+                "asia-southeast1",
+                "us-central1"
+              ]
+            }
+          },
+          {
+            "name": "Cloud Run",
+            "description": "Serverless containers with autoscaling.",
+            "tags": [
+              "serverless",
+              "containers"
+            ],
+            "starting_monthly": "Usage-based",
+            "starting_hourly": "Usage-based",
+            "options": {
+              "modes": [
+                "Service",
+                "Jobs"
+              ]
+            }
+          },
+          {
+            "name": "GKE",
+            "description": "Managed Kubernetes platform.",
+            "tags": [
+              "kubernetes",
+              "managed"
+            ],
+            "starting_monthly": "$102+",
+            "starting_hourly": "$0.14+",
+            "options": {
+              "modes": [
+                "Autopilot",
+                "Standard"
+              ]
+            }
+          }
+        ],
+        "Storage": [
+          {
+            "name": "Cloud Storage",
+            "description": "Unified object storage.",
+            "tags": [
+              "standard",
+              "archive"
+            ],
+            "starting_monthly": "$10+",
+            "starting_hourly": "$0.01+",
+            "options": {
+              "tiers": [
+                "Standard",
+                "Nearline",
+                "Archive"
+              ]
+            }
+          },
+          {
+            "name": "Persistent Disk",
+            "description": "Durable block storage.",
+            "tags": [
+              "ssd",
+              "balanced"
+            ],
+            "starting_monthly": "$10+",
+            "starting_hourly": "$0.01+",
+            "options": {
+              "types": [
+                "Balanced",
+                "SSD"
+              ]
+            }
+          }
+        ],
+        "Database": [
+          {
+            "name": "Cloud SQL",
+            "description": "Managed relational databases.",
+            "tags": [
+              "mysql",
+              "postgres"
+            ],
+            "starting_monthly": "$40+",
+            "starting_hourly": "$0.06+",
+            "options": {
+              "engines": [
+                "MySQL",
+                "PostgreSQL"
+              ]
+            }
+          },
+          {
+            "name": "Firestore",
+            "description": "Document database for app development.",
+            "tags": [
+              "nosql",
+              "documents"
+            ],
+            "starting_monthly": "$20+",
+            "starting_hourly": "Usage-based",
+            "options": {
+              "modes": [
+                "Native",
+                "Datastore"
+              ]
+            }
+          }
+        ],
+        "Networking": [
+          {
+            "name": "VPC",
+            "description": "Virtual private cloud networking.",
+            "tags": [
+              "subnets",
+              "firewall"
+            ],
+            "starting_monthly": "Varies",
+            "starting_hourly": "Varies",
+            "options": {
+              "components": [
+                "Subnets",
+                "Firewall",
+                "Cloud NAT"
+              ]
+            }
+          },
+          {
+            "name": "Cloud Load Balancing",
+            "description": "Global and regional load balancing.",
+            "tags": [
+              "global",
+              "http"
+            ],
+            "starting_monthly": "$17+",
+            "starting_hourly": "$0.02+",
+            "options": {
+              "types": [
+                "Application",
+                "Network"
+              ]
+            }
+          }
+        ],
+        "AI / ML": [
+          {
+            "name": "Vertex AI",
+            "description": "Managed ML training and inference platform.",
+            "tags": [
+              "ml",
+              "pipelines"
+            ],
+            "starting_monthly": "$58+",
+            "starting_hourly": "$0.08+",
+            "options": {
+              "services": [
+                "Workbench",
+                "Training",
+                "Endpoints"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}
