@@ -1,5 +1,5 @@
 {
-  "name": "tansmartx-v3-pro-frontend",
+  "name": "tansmartx-frontend",
   "version": "1.0.0",
   "private": true,
   "dependencies": {
@@ -10,6 +10,6 @@
   },
   "scripts": {
     "build": "react-scripts build",
-    "start": "serve -s build -l $PORT"
+    "start": "npm run build && serve -s build -l $PORT"
   }
 }
