@@ -217,18 +217,66 @@ export default function App() {
               ))}
             </div>
 
-            <div className="label">Categories</div>
-            <div className="tabs">
-              {categories.map((item) => (
-                <button
-                  key={item}
-                  className={`tab ${category === item ? "active" : ""}`}
-                  onClick={() => setCategory(item)}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
+            <div className="diagram-enterprise">
+
+  {/* Users */}
+  <div className="layer">
+    <div className="layer-title">Users</div>
+    <div className="node">End Users</div>
+  </div>
+
+  {/* Edge Layer */}
+  <div className="layer">
+    <div className="layer-title">Edge / Security</div>
+    <div className="node">
+      {provider === "Azure"
+        ? "Front Door / App Gateway"
+        : provider === "AWS"
+        ? "CloudFront / ALB"
+        : "Cloud Load Balancer"}
+    </div>
+  </div>
+
+  {/* Network Layer */}
+  <div className="layer">
+    <div className="layer-title">Network</div>
+    <div className="node">
+      {provider === "AWS" ? "VPC" : "VNet"}
+    </div>
+  </div>
+
+  {/* App Layer */}
+  <div className="layer">
+    <div className="layer-title">Application Layer</div>
+    {(selected.length === 0) && (
+      <div className="node">Application Tier</div>
+    )}
+
+    {selected.map((s) => (
+      <div className="node" key={s.name}>
+        {s.name}
+      </div>
+    ))}
+  </div>
+
+  {/* Data Layer */}
+  <div className="layer">
+    <div className="layer-title">Data Layer</div>
+
+    {selected.some(s => s.name.includes("SQL") || s.tags?.includes("db")) && (
+      <div className="node">Database</div>
+    )}
+
+    {selected.some(s => s.name.includes("Storage")) && (
+      <div className="node">Storage</div>
+    )}
+
+    {!selected.some(s => s.name.includes("SQL")) && (
+      <div className="node">Data Services</div>
+    )}
+  </div>
+
+</div>
 
             <div
               style={{
