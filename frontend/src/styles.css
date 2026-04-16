@@ -122,6 +122,13 @@ body {
   border-color: transparent;
 }
 
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -210,18 +217,28 @@ body {
   color: #04111f;
 }
 
-.diagram {
-  min-height: 220px;
+.proposal-box {
   border-radius: 18px;
   background: #0b1730;
   border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 16px;
 }
 
+.proposal-title {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
 .diagram-enterprise {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-height: 220px;
+  border-radius: 18px;
+  background: #0b1730;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px;
 }
 
 .layer {
@@ -247,15 +264,10 @@ body {
   padding: 10px 14px;
   margin: 6px 6px 0 0;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(103, 232, 249, 0.12);
+  border: 1px solid rgba(103, 232, 249, 0.22);
   font-weight: 700;
   min-height: 42px;
-}
-
-.arrow {
-  color: #67e8f9;
-  font-size: 18px;
 }
 
 .placeholder,
@@ -308,7 +320,8 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .grid {
+  .grid,
+  .summary-grid {
     grid-template-columns: 1fr;
   }
 
