@@ -85,30 +85,73 @@ export default function App() {
     );
   }
 
-  const architectureNodes = useMemo(() => {
-    if (!selected.length) {
-      return [
-        "Users",
-        "Internet",
-        provider === "Azure"
-          ? "Application Gateway"
-          : provider === "AWS"
-          ? "Application Load Balancer"
-          : "Cloud Load Balancing",
-        "App Tier",
-        "Database",
-      ];
-    }
+ const architectureNodes = useMemo(() => {
+  const nodes = ["Users", "Internet"];
 
-    const base =
-      provider === "Azure"
-        ? ["Users", "Internet", "Application Gateway", "VNet"]
-        : provider === "AWS"
-        ? ["Users", "Internet", "ALB", "VPC"]
-        : ["Users", "Internet", "Global Load Balancer", "VPC"];
+  // Edge Layer
+  if (provider === "Azure") {
+    nodes.push("Front Door / App Gateway");
+  } else if (provider === "AWS") {
+    nodes.push("CloudFront / ALB");
+  } else {
+    nodes.push("Cloud Load Balancer");
+  }
 
-    return [...base, ...selected.map((s) => s.name)];
-  }, [provider, selected]);
+  // Network Layer
+  nodes.push(provider === "AWS" ? "VPC" : "VNet");
+
+  // Detect workloads
+  const hasK8s = selected.some(
+    (s) =>
+      s.name.includes("AKS") ||
+      s.name.includes("EKS") ||
+      s.name.includes("GKE") ||
+      s.name.includes("Kubernetes")
+  );
+
+  const hasWeb = selected.some(
+    (s) =>
+      s.name.includes("App Service") ||
+      s.name.includes("Cloud Run") ||
+      s.name.includes("Elastic Beanstalk") ||
+      s.name.includes("App")
+  );
+
+  const hasDB = selected.some(
+    (s) =>
+      s.name.includes("SQL") ||
+      s.name.includes("PostgreSQL") ||
+      s.name.includes("RDS") ||
+      (s.tags || []).some((tag) =>
+        ["sql", "managed-db", "postgres", "mysql", "ha"].includes(tag)
+      )
+  );
+
+  const hasStorage = selected.some(
+    (s) =>
+      s.name.includes("Storage") ||
+      s.name.includes("S3") ||
+      s.name.includes("Blob") ||
+      (s.tags || []).some((tag) =>
+        ["object-storage", "backup", "archive"].includes(tag)
+      )
+  );
+
+  // App Layer
+  if (hasK8s) nodes.push("Kubernetes Cluster");
+  if (hasWeb) nodes.push("Application Layer");
+
+  // Data Layer
+  if (hasDB) nodes.push("Database");
+  if (hasStorage) nodes.push("Storage");
+
+  // Default fallback
+  if (!hasK8s && !hasWeb && !hasDB && !hasStorage) {
+    nodes.push("Application Tier", "Database");
+  }
+
+  return nodes;
+}, [provider, selected]);
 
   const providerSummary = catalog?.[provider]?.summary || {};
 
