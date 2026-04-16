@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 
-const API = "";
+const API = window.location.origin;
 
 export default function App() {
   const [data, setData] = useState(null);
