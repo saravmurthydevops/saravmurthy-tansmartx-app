@@ -11,7 +11,7 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-app.get("/api", (req, res) => {
+app.get("/", (req, res) => {
   res.json({
     provider: "Azure",
     categories: ["Compute", "Storage", "Database", "Networking", "AI / ML"],
