@@ -3,56 +3,76 @@ import React, { useEffect, useMemo, useState } from "react";
 const API = window.location.origin;
 
 export default function App() {
-  const [data, setData] = useState(null);
+  const [catalog, setCatalog] = useState({});
   const [provider, setProvider] = useState("Azure");
   const [category, setCategory] = useState("Compute");
   const [selected, setSelected] = useState([]);
   const [active, setActive] = useState(null);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API}/api`)
-      .then((r) => {
-        if (!r.ok) {
-          throw new Error("Failed to load API data");
+    fetch(`${API}/api/catalog`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`API request failed: ${res.status}`);
         }
-        return r.json();
+        return res.json();
       })
       .then((json) => {
-        setData(json);
-        if (json.provider) setProvider(json.provider);
-        if (json.categories?.length) setCategory(json.categories[0]);
+        setCatalog(json);
+
+        const providers = Object.keys(json || {});
+        const firstProvider = providers[0] || "Azure";
+        const firstCategory =
+          Object.keys(json[firstProvider]?.categories || {})[0] || "Compute";
+
+        setProvider(firstProvider);
+        setCategory(firstCategory);
+        setLoading(false);
       })
       .catch((err) => {
         console.error(err);
-        setError("Unable to load TanSmartX data from backend.");
+        setError("Unable to load TanSmartX enterprise catalog.");
+        setLoading(false);
       });
   }, []);
 
-  const categories = useMemo(() => data?.categories || [], [data]);
+  const providers = useMemo(() => Object.keys(catalog || {}), [catalog]);
+
+  const categories = useMemo(() => {
+    return Object.keys(catalog?.[provider]?.categories || {});
+  }, [catalog, provider]);
 
   const services = useMemo(() => {
-    const list = data?.services || [];
+    const list = catalog?.[provider]?.categories?.[category] || [];
     return list.filter((s) =>
       `${s.name} ${s.description} ${(s.tags || []).join(" ")}`
         .toLowerCase()
         .includes(search.toLowerCase())
     );
-  }, [data, search]);
+  }, [catalog, provider, category, search]);
 
   const estimatedCost = useMemo(() => {
+    const items = selected.map((item) => {
+      const monthly =
+        item.starting_monthly || item.price || "RM 0/month";
+      return {
+        name: item.name,
+        monthly,
+      };
+    });
+
     const total = selected.reduce((sum, item) => {
-      const value = Number(String(item.price || "").replace(/[^\d.]/g, ""));
-      return sum + (isNaN(value) ? 0 : value);
+      const raw = item.starting_monthly || item.price || "";
+      const value = Number(String(raw).replace(/[^\d.]/g, ""));
+      return sum + (Number.isNaN(value) ? 0 : value);
     }, 0);
 
     return {
-      monthly: `RM ${total}/month`,
-      items: selected.map((item) => ({
-        name: item.name,
-        monthly: item.price || "RM 0/month",
-      })),
+      monthly: `RM ${total.toFixed(2)}/month`,
+      items,
     };
   }, [selected]);
 
@@ -65,9 +85,32 @@ export default function App() {
     );
   }
 
-  const architectureNodes = selected.length
-    ? ["Users", "Internet", ...selected.map((s) => s.name)]
-    : data?.architecture || ["Users", "Internet"];
+  const architectureNodes = useMemo(() => {
+    if (!selected.length) {
+      return [
+        "Users",
+        "Internet",
+        provider === "Azure"
+          ? "Application Gateway"
+          : provider === "AWS"
+          ? "Application Load Balancer"
+          : "Cloud Load Balancing",
+        "App Tier",
+        "Database",
+      ];
+    }
+
+    const base =
+      provider === "Azure"
+        ? ["Users", "Internet", "Application Gateway", "VNet"]
+        : provider === "AWS"
+        ? ["Users", "Internet", "ALB", "VPC"]
+        : ["Users", "Internet", "Global Load Balancer", "VPC"];
+
+    return [...base, ...selected.map((s) => s.name)];
+  }, [provider, selected]);
+
+  const providerSummary = catalog?.[provider]?.summary || {};
 
   return (
     <div className="app">
@@ -93,6 +136,13 @@ export default function App() {
         </p>
       </section>
 
+      {loading && (
+        <section className="card" style={{ margin: "16px" }}>
+          <div className="label">Loading</div>
+          <p>Loading enterprise catalog...</p>
+        </section>
+      )}
+
       {error && (
         <section className="card" style={{ margin: "16px" }}>
           <div className="label">Error</div>
@@ -105,7 +155,23 @@ export default function App() {
           <div className="card">
             <div className="label">Providers</div>
             <div className="tabs">
-              <button className="tab active">{provider}</button>
+              {providers.map((item) => (
+                <button
+                  key={item}
+                  className={`tab ${provider === item ? "active" : ""}`}
+                  onClick={() => {
+                    setProvider(item);
+                    const nextCategory =
+                      Object.keys(catalog?.[item]?.categories || {})[0] ||
+                      "Compute";
+                    setCategory(nextCategory);
+                    setSelected([]);
+                    setActive(null);
+                  }}
+                >
+                  {item}
+                </button>
+              ))}
             </div>
 
             <div className="label">Categories</div>
@@ -120,6 +186,28 @@ export default function App() {
                 </button>
               ))}
             </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: "12px",
+                marginTop: "20px",
+              }}
+            >
+              <div className="opt">
+                <small>Provider</small>
+                <strong>{provider}</strong>
+              </div>
+              <div className="opt">
+                <small>Regions</small>
+                <strong>{providerSummary.regions || "Global"}</strong>
+              </div>
+              <div className="opt">
+                <small>Focus</small>
+                <strong>{providerSummary.focus || "Enterprise workloads"}</strong>
+              </div>
+            </div>
           </div>
 
           <div className="card">
@@ -127,8 +215,12 @@ export default function App() {
             <div className="grid">
               {services.map((service) => {
                 const picked = selected.some((s) => s.name === service.name);
+
                 return (
-                  <div key={service.name} className={`svc ${picked ? "picked" : ""}`}>
+                  <div
+                    key={service.name}
+                    className={`svc ${picked ? "picked" : ""}`}
+                  >
                     <div className="svcType">{service.name}</div>
                     <p>{service.description}</p>
 
@@ -141,7 +233,12 @@ export default function App() {
                     </div>
 
                     <div className="price">
-                      <strong>{service.price}</strong>
+                      <strong>
+                        {service.starting_monthly || service.price || "RM 0/month"}
+                      </strong>
+                      <small>
+                        {service.starting_hourly || service.region || ""}
+                      </small>
                     </div>
 
                     <div className="actions">
@@ -165,7 +262,7 @@ export default function App() {
         <section>
           <div className="card">
             <div className="label">Architecture Preview</div>
-            <div className="diagram">
+            <div className="diagram" style={{ flexWrap: "wrap", rowGap: "14px" }}>
               {architectureNodes.map((node, i) => (
                 <React.Fragment key={`${node}-${i}`}>
                   <div className="node">{node}</div>
@@ -181,21 +278,34 @@ export default function App() {
             <div className="label">Service Options</div>
             {!active ? (
               <div className="placeholder">
-                Select a service to view details.
+                Select a service to view enterprise details.
               </div>
             ) : (
               <div className="options">
                 <div className="optTitle">
                   {provider} / {active.name}
                 </div>
+
                 <div className="opt">
                   <small>Description</small>
                   <strong>{active.description}</strong>
                 </div>
+
                 <div className="opt">
-                  <small>Price</small>
-                  <strong>{active.price}</strong>
+                  <small>Starting Monthly</small>
+                  <strong>{active.starting_monthly || active.price || "N/A"}</strong>
                 </div>
+
+                <div className="opt">
+                  <small>Starting Hourly</small>
+                  <strong>{active.starting_hourly || "N/A"}</strong>
+                </div>
+
+                <div className="opt">
+                  <small>Region</small>
+                  <strong>{active.region || "Standard region set"}</strong>
+                </div>
+
                 <div className="opt">
                   <small>Tags</small>
                   <strong>{(active.tags || []).join(", ") || "N/A"}</strong>
