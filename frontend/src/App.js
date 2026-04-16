@@ -56,8 +56,7 @@ export default function App() {
 
   const estimatedCost = useMemo(() => {
     const items = selected.map((item) => {
-      const monthly =
-        item.starting_monthly || item.price || "RM 0/month";
+      const monthly = item.starting_monthly || item.price || "RM 0/month";
       return {
         name: item.name,
         monthly,
@@ -85,75 +84,62 @@ export default function App() {
     );
   }
 
- const architectureNodes = useMemo(() => {
-  const nodes = ["Users", "Internet"];
-
-  // Edge Layer
-  if (provider === "Azure") {
-    nodes.push("Front Door / App Gateway");
-  } else if (provider === "AWS") {
-    nodes.push("CloudFront / ALB");
-  } else {
-    nodes.push("Cloud Load Balancer");
-  }
-
-  // Network Layer
-  nodes.push(provider === "AWS" ? "VPC" : "VNet");
-
-  // Detect workloads
-  const hasK8s = selected.some(
-    (s) =>
-      s.name.includes("AKS") ||
-      s.name.includes("EKS") ||
-      s.name.includes("GKE") ||
-      s.name.includes("Kubernetes")
-  );
-
-  const hasWeb = selected.some(
-    (s) =>
-      s.name.includes("App Service") ||
-      s.name.includes("Cloud Run") ||
-      s.name.includes("Elastic Beanstalk") ||
-      s.name.includes("App")
-  );
-
-  const hasDB = selected.some(
-    (s) =>
-      s.name.includes("SQL") ||
-      s.name.includes("PostgreSQL") ||
-      s.name.includes("RDS") ||
-      (s.tags || []).some((tag) =>
-        ["sql", "managed-db", "postgres", "mysql", "ha"].includes(tag)
-      )
-  );
-
-  const hasStorage = selected.some(
-    (s) =>
-      s.name.includes("Storage") ||
-      s.name.includes("S3") ||
-      s.name.includes("Blob") ||
-      (s.tags || []).some((tag) =>
-        ["object-storage", "backup", "archive"].includes(tag)
-      )
-  );
-
-  // App Layer
-  if (hasK8s) nodes.push("Kubernetes Cluster");
-  if (hasWeb) nodes.push("Application Layer");
-
-  // Data Layer
-  if (hasDB) nodes.push("Database");
-  if (hasStorage) nodes.push("Storage");
-
-  // Default fallback
-  if (!hasK8s && !hasWeb && !hasDB && !hasStorage) {
-    nodes.push("Application Tier", "Database");
-  }
-
-  return nodes;
-}, [provider, selected]);
-
   const providerSummary = catalog?.[provider]?.summary || {};
+
+  const architecture = useMemo(() => {
+    const edge =
+      provider === "Azure"
+        ? "Front Door / App Gateway"
+        : provider === "AWS"
+        ? "CloudFront / ALB"
+        : "Cloud Load Balancer";
+
+    const network = provider === "AWS" ? "VPC" : "VNet";
+
+    const appServices = selected.filter((s) =>
+      [
+        "AKS",
+        "EKS",
+        "GKE",
+        "App Service",
+        "Cloud Run",
+        "Elastic Beanstalk",
+        "Virtual Machines",
+        "EC2",
+        "Compute Engine",
+      ].some((name) => s.name.includes(name))
+    );
+
+    const dataServices = selected.filter((s) =>
+      [
+        "SQL",
+        "PostgreSQL",
+        "RDS",
+        "Storage",
+        "Blob",
+        "S3",
+        "Cloud Storage",
+      ].some((name) => s.name.includes(name))
+    );
+
+    return {
+      users: ["End Users"],
+      edge: [edge],
+      network: [network],
+      app: appServices.length ? appServices.map((s) => s.name) : ["Application Tier"],
+      data: dataServices.length ? dataServices.map((s) => s.name) : ["Data Services"],
+    };
+  }, [provider, selected]);
+
+  const proposalSummary = useMemo(() => {
+    if (!selected.length) {
+      return `TanSmartX recommends starting with a ${provider} solution baseline. Select services to build a client-ready architecture and cost estimate.`;
+    }
+
+    return `This proposed ${provider} solution includes ${selected
+      .map((s) => s.name)
+      .join(", ")}. It is designed as a modern cloud architecture with separated edge, network, application, and data layers.`;
+  }, [provider, selected]);
 
   return (
     <div className="app">
@@ -217,75 +203,20 @@ export default function App() {
               ))}
             </div>
 
-            <div className="diagram-enterprise">
+            <div className="label">Categories</div>
+            <div className="tabs">
+              {categories.map((item) => (
+                <button
+                  key={item}
+                  className={`tab ${category === item ? "active" : ""}`}
+                  onClick={() => setCategory(item)}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
 
-  {/* Users */}
-  <div className="layer">
-    <div className="layer-title">Users</div>
-    <div className="node">End Users</div>
-  </div>
-
-  {/* Edge Layer */}
-  <div className="layer">
-    <div className="layer-title">Edge / Security</div>
-    <div className="node">
-      {provider === "Azure"
-        ? "Front Door / App Gateway"
-        : provider === "AWS"
-        ? "CloudFront / ALB"
-        : "Cloud Load Balancer"}
-    </div>
-  </div>
-
-  {/* Network Layer */}
-  <div className="layer">
-    <div className="layer-title">Network</div>
-    <div className="node">
-      {provider === "AWS" ? "VPC" : "VNet"}
-    </div>
-  </div>
-
-  {/* App Layer */}
-  <div className="layer">
-    <div className="layer-title">Application Layer</div>
-    {(selected.length === 0) && (
-      <div className="node">Application Tier</div>
-    )}
-
-    {selected.map((s) => (
-      <div className="node" key={s.name}>
-        {s.name}
-      </div>
-    ))}
-  </div>
-
-  {/* Data Layer */}
-  <div className="layer">
-    <div className="layer-title">Data Layer</div>
-
-    {selected.some(s => s.name.includes("SQL") || s.tags?.includes("db")) && (
-      <div className="node">Database</div>
-    )}
-
-    {selected.some(s => s.name.includes("Storage")) && (
-      <div className="node">Storage</div>
-    )}
-
-    {!selected.some(s => s.name.includes("SQL")) && (
-      <div className="node">Data Services</div>
-    )}
-  </div>
-
-</div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                gap: "12px",
-                marginTop: "20px",
-              }}
-            >
+            <div className="summary-grid">
               <div className="opt">
                 <small>Provider</small>
                 <strong>{provider}</strong>
@@ -352,16 +283,52 @@ export default function App() {
 
         <section>
           <div className="card">
+            <div className="label">Client Solution Summary</div>
+            <div className="proposal-box">
+              <div className="proposal-title">
+                Proposed {provider} Architecture
+              </div>
+              <p>{proposalSummary}</p>
+            </div>
+          </div>
+
+          <div className="card">
             <div className="label">Architecture Preview</div>
-            <div className="diagram" style={{ flexWrap: "wrap", rowGap: "14px" }}>
-              {architectureNodes.map((node, i) => (
-                <React.Fragment key={`${node}-${i}`}>
-                  <div className="node">{node}</div>
-                  {i < architectureNodes.length - 1 && (
-                    <div className="arrow">→</div>
-                  )}
-                </React.Fragment>
-              ))}
+            <div className="diagram-enterprise">
+              <div className="layer">
+                <div className="layer-title">Users</div>
+                {architecture.users.map((node) => (
+                  <div className="node" key={node}>{node}</div>
+                ))}
+              </div>
+
+              <div className="layer">
+                <div className="layer-title">Edge / Security</div>
+                {architecture.edge.map((node) => (
+                  <div className="node" key={node}>{node}</div>
+                ))}
+              </div>
+
+              <div className="layer">
+                <div className="layer-title">Network</div>
+                {architecture.network.map((node) => (
+                  <div className="node" key={node}>{node}</div>
+                ))}
+              </div>
+
+              <div className="layer">
+                <div className="layer-title">Application Layer</div>
+                {architecture.app.map((node) => (
+                  <div className="node" key={node}>{node}</div>
+                ))}
+              </div>
+
+              <div className="layer">
+                <div className="layer-title">Data Layer</div>
+                {architecture.data.map((node) => (
+                  <div className="node" key={node}>{node}</div>
+                ))}
+              </div>
             </div>
           </div>
 
