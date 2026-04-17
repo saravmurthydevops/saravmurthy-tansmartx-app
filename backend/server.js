@@ -15,7 +15,7 @@ let projects = [];
 /* =========================================
    📦 CATALOG (your existing one – unchanged)
 ========================================= */
-const catalog = require("./catalog.json"); 
+const catalog = require("./catalog.json");
 // 👉 optional: move your big catalog into catalog.json later
 
 /* =========================================
