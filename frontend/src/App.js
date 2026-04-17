@@ -9,44 +9,24 @@ export default function App() {
   const [selected, setSelected] = useState([]);
   const [active, setActive] = useState(null);
   const [search, setSearch] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [cost, setCost] = useState({ monthly: "RM 0.00", hourly: "", items: [] });
 
   useEffect(() => {
     fetch(`${API}/api/catalog`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`API request failed: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((json) => {
-        setCatalog(json);
-
-        const providerList = Object.keys(json || {});
-        const firstProvider = providerList[0] || "Azure";
-        const firstCategory =
-          Object.keys(json[firstProvider]?.categories || {})[0] || "Compute";
-
-        setProvider(firstProvider);
-        setCategory(firstCategory);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError("Unable to load TanSmartX enterprise catalog.");
-        setLoading(false);
-      });
+      .then((r) => r.json())
+      .then(setCatalog)
+      .catch(console.error);
   }, []);
 
   const providers = useMemo(() => Object.keys(catalog || {}), [catalog]);
 
-  const categories = useMemo(() => {
-    return Object.keys(catalog?.[provider]?.categories || {});
-  }, [catalog, provider]);
+  const categories = useMemo(
+    () => (catalog[provider] ? Object.keys(catalog[provider].categories || {}) : []),
+    [catalog, provider]
+  );
 
   const services = useMemo(() => {
-    const list = catalog?.[provider]?.categories?.[category] || [];
+    const list = catalog[provider]?.categories?.[category] || [];
     return list.filter((s) =>
       `${s.name} ${s.description} ${(s.tags || []).join(" ")}`
         .toLowerCase()
@@ -54,23 +34,16 @@ export default function App() {
     );
   }, [catalog, provider, category, search]);
 
-  const estimatedCost = useMemo(() => {
-    const items = selected.map((item) => {
-      const monthly = item.starting_monthly || item.price || "RM 0/month";
-      return { name: item.name, monthly };
-    });
-
-    const total = selected.reduce((sum, item) => {
-      const raw = item.starting_monthly || item.price || "";
-      const value = Number(String(raw).replace(/[^\d.]/g, ""));
-      return sum + (Number.isNaN(value) ? 0 : value);
-    }, 0);
-
-    return {
-      monthly: `RM ${total.toFixed(2)}/month`,
-      items,
-    };
-  }, [selected]);
+  useEffect(() => {
+    fetch(`${API}/api/pricing`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider, services: selected }),
+    })
+      .then((r) => r.json())
+      .then(setCost)
+      .catch(console.error);
+  }, [provider, selected]);
 
   function toggleService(service) {
     setActive(service);
@@ -93,8 +66,16 @@ export default function App() {
       ],
       network: [provider === "AWS" ? "VPC" : "VNet"],
       app: selected.length ? selected.map((s) => s.name) : ["Application Tier"],
-      data: selected.some((s) => s.name.includes("SQL"))
+      data: selected.some((s) =>
+        ["SQL", "PostgreSQL", "RDS"].some((name) => s.name.includes(name))
+      )
         ? ["Database"]
+        : selected.some((s) =>
+            ["Storage", "Blob", "S3", "Cloud Storage"].some((name) =>
+              s.name.includes(name)
+            )
+          )
+        ? ["Storage"]
         : ["Data Services"],
       ops: ["Monitoring", "Logging", "Backup"],
     };
@@ -118,25 +99,8 @@ export default function App() {
       <section className="hero">
         <div className="chip">Fast to cloud • curated enterprise catalog</div>
         <h2>Design cloud solutions with confidence.</h2>
-        <p>
-          Choose a provider, explore services, assemble architecture, and
-          estimate cost.
-        </p>
+        <p>Choose a provider, explore services, assemble architecture, and estimate cost.</p>
       </section>
-
-      {loading && (
-        <section className="card" style={{ margin: "16px" }}>
-          <div className="label">Loading</div>
-          <p>Loading enterprise catalog...</p>
-        </section>
-      )}
-
-      {error && (
-        <section className="card" style={{ margin: "16px" }}>
-          <div className="label">Error</div>
-          <p>{error}</p>
-        </section>
-      )}
 
       <main className="layout">
         <section>
@@ -149,10 +113,7 @@ export default function App() {
                   className={`tab ${provider === item ? "active" : ""}`}
                   onClick={() => {
                     setProvider(item);
-                    const nextCategory =
-                      Object.keys(catalog?.[item]?.categories || {})[0] ||
-                      "Compute";
-                    setCategory(nextCategory);
+                    setCategory(Object.keys(catalog[item].categories || {})[0] || "Compute");
                     setSelected([]);
                     setActive(null);
                   }}
@@ -181,7 +142,6 @@ export default function App() {
             <div className="grid">
               {services.map((service) => {
                 const picked = selected.some((s) => s.name === service.name);
-
                 return (
                   <div key={service.name} className={`svc ${picked ? "picked" : ""}`}>
                     <div className="svcType">{service.name}</div>
@@ -196,8 +156,8 @@ export default function App() {
                     </div>
 
                     <div className="price">
-                      <strong>{service.starting_monthly || service.price || "RM 0/month"}</strong>
-                      <small>{service.starting_hourly || service.region || ""}</small>
+                      <strong>{service.starting_monthly}</strong>
+                      <small>{service.starting_hourly}</small>
                     </div>
 
                     <div className="actions">
@@ -231,33 +191,28 @@ export default function App() {
           <div className="card">
             <div className="label">Service Options</div>
             {!active ? (
-              <div className="placeholder">Select a service to view enterprise details.</div>
+              <div className="placeholder">Select a service to view suggested options.</div>
             ) : (
               <div className="options">
                 <div className="optTitle">
                   {provider} / {active.name}
                 </div>
-
                 <div className="opt">
                   <small>Description</small>
                   <strong>{active.description}</strong>
                 </div>
-
                 <div className="opt">
                   <small>Starting Monthly</small>
-                  <strong>{active.starting_monthly || active.price || "N/A"}</strong>
+                  <strong>{active.starting_monthly || "N/A"}</strong>
                 </div>
-
                 <div className="opt">
                   <small>Starting Hourly</small>
                   <strong>{active.starting_hourly || "N/A"}</strong>
                 </div>
-
                 <div className="opt">
                   <small>Region</small>
-                  <strong>{active.region || "Standard region set"}</strong>
+                  <strong>{active.region || "N/A"}</strong>
                 </div>
-
                 <div className="opt">
                   <small>Tags</small>
                   <strong>{(active.tags || []).join(", ") || "N/A"}</strong>
@@ -268,7 +223,7 @@ export default function App() {
 
           <div className="card">
             <div className="label">Estimated Cost</div>
-            {estimatedCost.items.map((item) => (
+            {(cost.items || []).map((item) => (
               <div className="cost" key={item.name}>
                 <span>{item.name}</span>
                 <strong>{item.monthly}</strong>
@@ -276,8 +231,13 @@ export default function App() {
             ))}
             <div className="total">
               <div>
-                <strong>Monthly:</strong> {estimatedCost.monthly}
+                <strong>Monthly:</strong> {cost.monthly}
               </div>
+              {cost.hourly ? (
+                <div>
+                  <strong>Hourly:</strong> {cost.hourly}
+                </div>
+              ) : null}
             </div>
           </div>
         </section>
