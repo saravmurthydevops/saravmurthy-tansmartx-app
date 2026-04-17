@@ -12,6 +12,12 @@ export default function App() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const [environment, setEnvironment] = useState("Production");
+  const [topology, setTopology] = useState("Standard 3-Tier");
+  const [internetFacing, setInternetFacing] = useState(true);
+  const [highAvailability, setHighAvailability] = useState(true);
+  const [region, setRegion] = useState("Auto");
+
   useEffect(() => {
     fetch(`${API}/api/catalog`)
       .then((res) => {
@@ -41,18 +47,40 @@ export default function App() {
 
   const providers = useMemo(() => Object.keys(catalog || {}), [catalog]);
 
+  const providerSummary = useMemo(() => {
+    return catalog?.[provider]?.summary || {};
+  }, [catalog, provider]);
+
   const categories = useMemo(() => {
     return Object.keys(catalog?.[provider]?.categories || {});
   }, [catalog, provider]);
 
+  const allProviderServices = useMemo(() => {
+    const categoryMap = catalog?.[provider]?.categories || {};
+    return Object.values(categoryMap).flat();
+  }, [catalog, provider]);
+
+  const regions = useMemo(() => {
+    const raw = allProviderServices
+      .map((s) => s.region)
+      .filter(Boolean)
+      .filter((value, index, arr) => arr.indexOf(value) === index);
+
+    return ["Auto", ...raw];
+  }, [allProviderServices]);
+
   const services = useMemo(() => {
     const list = catalog?.[provider]?.categories?.[category] || [];
-    return list.filter((s) =>
-      `${s.name} ${s.description} ${(s.tags || []).join(" ")}`
+    return list.filter((s) => {
+      const matchesSearch = `${s.name} ${s.description} ${(s.tags || []).join(" ")}`
         .toLowerCase()
-        .includes(search.toLowerCase())
-    );
-  }, [catalog, provider, category, search]);
+        .includes(search.toLowerCase());
+
+      const matchesRegion = region === "Auto" || s.region === region;
+
+      return matchesSearch && matchesRegion;
+    });
+  }, [catalog, provider, category, search, region]);
 
   const estimatedCost = useMemo(() => {
     const items = selected.map((item) => {
@@ -69,11 +97,20 @@ export default function App() {
       return sum + (Number.isNaN(value) ? 0 : value);
     }, 0);
 
+    const multiplier =
+      environment === "Production"
+        ? highAvailability
+          ? 1.35
+          : 1.15
+        : environment === "Staging"
+        ? 0.7
+        : 0.45;
+
     return {
-      monthly: `RM ${total.toFixed(2)}/month`,
+      monthly: `RM ${(total * multiplier).toFixed(2)}/month`,
       items,
     };
-  }, [selected]);
+  }, [selected, environment, highAvailability]);
 
   function toggleService(service) {
     setActive(service);
@@ -84,17 +121,72 @@ export default function App() {
     );
   }
 
-  const providerSummary = catalog?.[provider]?.summary || {};
+  const recommendations = useMemo(() => {
+    const selectedNames = selected.map((s) => s.name).join(" ");
+
+    const result = [];
+
+    if (internetFacing) {
+      result.push(
+        provider === "Azure"
+          ? "Add Front Door or Application Gateway for secure internet ingress"
+          : provider === "AWS"
+          ? "Add CloudFront or Application Load Balancer for secure internet ingress"
+          : "Add Cloud Load Balancer for public entry and traffic distribution"
+      );
+    }
+
+    if (
+      /AKS|EKS|GKE|Kubernetes/i.test(selectedNames) &&
+      !selected.some((s) =>
+        /Application Gateway|Application Load Balancer|Cloud Load Balancing/i.test(
+          s.name
+        )
+      )
+    ) {
+      result.push("Kubernetes platforms should sit behind a load balancer and private network layer");
+    }
+
+    if (
+      /SQL|PostgreSQL|RDS/i.test(selectedNames) &&
+      highAvailability
+    ) {
+      result.push("Use HA database deployment with backups and private connectivity");
+    }
+
+    if (topology === "Standard 3-Tier") {
+      result.push("Separate edge, application, and data layers for cleaner architecture and governance");
+    }
+
+    if (environment === "Production") {
+      result.push("Production should include monitoring, backup, and availability design");
+    }
+
+    if (result.length === 0) {
+      result.push("Start with a load balancer, application tier, and managed database baseline");
+    }
+
+    return result;
+  }, [provider, selected, internetFacing, highAvailability, topology, environment]);
 
   const architecture = useMemo(() => {
     const edge =
       provider === "Azure"
-        ? "Front Door / App Gateway"
+        ? internetFacing
+          ? ["Front Door", "Application Gateway / WAF"]
+          : ["Internal Application Gateway"]
         : provider === "AWS"
-        ? "CloudFront / ALB"
-        : "Cloud Load Balancer";
+        ? internetFacing
+          ? ["CloudFront", "Application Load Balancer / WAF"]
+          : ["Internal Load Balancer"]
+        : internetFacing
+        ? ["Cloud Load Balancer", "Cloud Armor / Edge Security"]
+        : ["Internal Load Balancer"];
 
-    const network = provider === "AWS" ? "VPC" : "VNet";
+    const network =
+      provider === "AWS"
+        ? ["VPC", highAvailability ? "Multi-AZ Subnets" : "Application Subnets"]
+        : ["VNet", highAvailability ? "Multi-Zone Subnets" : "Application Subnets"];
 
     const appServices = selected.filter((s) =>
       [
@@ -122,24 +214,33 @@ export default function App() {
       ].some((name) => s.name.includes(name))
     );
 
+    const operations = [
+      "Monitoring",
+      "Logging",
+      highAvailability ? "Backup / DR" : "Backups",
+    ];
+
     return {
-      users: ["End Users"],
-      edge: [edge],
-      network: [network],
+      users: ["End Users", environment],
+      edge,
+      network,
       app: appServices.length ? appServices.map((s) => s.name) : ["Application Tier"],
       data: dataServices.length ? dataServices.map((s) => s.name) : ["Data Services"],
+      ops: operations,
     };
-  }, [provider, selected]);
+  }, [provider, selected, internetFacing, highAvailability, environment]);
 
   const proposalSummary = useMemo(() => {
-    if (!selected.length) {
-      return `TanSmartX recommends starting with a ${provider} solution baseline. Select services to build a client-ready architecture and cost estimate.`;
-    }
+    const selectedText = selected.length
+      ? selected.map((s) => s.name).join(", ")
+      : "a baseline architecture";
 
-    return `This proposed ${provider} solution includes ${selected
-      .map((s) => s.name)
-      .join(", ")}. It is designed as a modern cloud architecture with separated edge, network, application, and data layers.`;
-  }, [provider, selected]);
+    return `This ${environment.toLowerCase()} ${provider} design uses ${selectedText}. The solution is organized into user, edge/security, network, application, data, and operations layers. ${
+      highAvailability
+        ? "High availability is enabled for stronger resilience."
+        : "This design uses a lighter availability profile."
+    } ${internetFacing ? "Internet-facing access is enabled." : "The solution is designed for internal/private access."}`;
+  }, [environment, provider, selected, highAvailability, internetFacing]);
 
   return (
     <div className="app">
@@ -196,6 +297,7 @@ export default function App() {
                     setCategory(nextCategory);
                     setSelected([]);
                     setActive(null);
+                    setRegion("Auto");
                   }}
                 >
                   {item}
@@ -214,6 +316,77 @@ export default function App() {
                   {item}
                 </button>
               ))}
+            </div>
+
+            <div className="label">Architecture Controls</div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: "12px",
+              }}
+            >
+              <div className="opt">
+                <small>Region</small>
+                <select
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value)}
+                  style={selectStyle}
+                >
+                  {regions.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="opt">
+                <small>Environment</small>
+                <select
+                  value={environment}
+                  onChange={(e) => setEnvironment(e.target.value)}
+                  style={selectStyle}
+                >
+                  <option>Production</option>
+                  <option>Staging</option>
+                  <option>Development</option>
+                </select>
+              </div>
+
+              <div className="opt">
+                <small>Topology</small>
+                <select
+                  value={topology}
+                  onChange={(e) => setTopology(e.target.value)}
+                  style={selectStyle}
+                >
+                  <option>Standard 3-Tier</option>
+                  <option>Microservices Platform</option>
+                  <option>Simple Web App</option>
+                </select>
+              </div>
+
+              <div className="opt">
+                <small>Exposure</small>
+                <select
+                  value={internetFacing ? "Internet-facing" : "Private only"}
+                  onChange={(e) => setInternetFacing(e.target.value === "Internet-facing")}
+                  style={selectStyle}
+                >
+                  <option>Internet-facing</option>
+                  <option>Private only</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="tabs" style={{ marginTop: "14px" }}>
+              <button
+                className={`tab ${highAvailability ? "active" : ""}`}
+                onClick={() => setHighAvailability((v) => !v)}
+              >
+                {highAvailability ? "HA Enabled" : "HA Disabled"}
+              </button>
             </div>
 
             <div className="summary-grid">
@@ -293,52 +466,25 @@ export default function App() {
           </div>
 
           <div className="card">
+            <div className="label">Architecture Recommendations</div>
+            <div className="options">
+              {recommendations.map((item) => (
+                <div className="opt" key={item}>
+                  <strong>{item}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="card">
             <div className="label">Architecture Preview</div>
             <div className="diagram-enterprise">
-              <div className="layer">
-                <div className="layer-title">Users</div>
-                {architecture.users.map((node) => (
-                  <div className="node" key={node}>
-                    {node}
-                  </div>
-                ))}
-              </div>
-
-              <div className="layer">
-                <div className="layer-title">Edge / Security</div>
-                {architecture.edge.map((node) => (
-                  <div className="node" key={node}>
-                    {node}
-                  </div>
-                ))}
-              </div>
-
-              <div className="layer">
-                <div className="layer-title">Network</div>
-                {architecture.network.map((node) => (
-                  <div className="node" key={node}>
-                    {node}
-                  </div>
-                ))}
-              </div>
-
-              <div className="layer">
-                <div className="layer-title">Application Layer</div>
-                {architecture.app.map((node) => (
-                  <div className="node" key={node}>
-                    {node}
-                  </div>
-                ))}
-              </div>
-
-              <div className="layer">
-                <div className="layer-title">Data Layer</div>
-                {architecture.data.map((node) => (
-                  <div className="node" key={node}>
-                    {node}
-                  </div>
-                ))}
-              </div>
+              <Layer title="Users" items={architecture.users} />
+              <Layer title="Edge / Security" items={architecture.edge} />
+              <Layer title="Network" items={architecture.network} />
+              <Layer title="Application Layer" items={architecture.app} />
+              <Layer title="Data Layer" items={architecture.data} />
+              <Layer title="Operations" items={architecture.ops} />
             </div>
           </div>
 
@@ -401,3 +547,27 @@ export default function App() {
     </div>
   );
 }
+
+function Layer({ title, items }) {
+  return (
+    <div className="layer">
+      <div className="layer-title">{title}</div>
+      {items.map((node) => (
+        <div className="node" key={node}>
+          {node}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const selectStyle = {
+  width: "100%",
+  marginTop: "8px",
+  padding: "10px 12px",
+  borderRadius: "12px",
+  border: "1px solid rgba(255,255,255,0.1)",
+  background: "rgba(255,255,255,0.05)",
+  color: "#e8f1ff",
+  outline: "none",
+};
