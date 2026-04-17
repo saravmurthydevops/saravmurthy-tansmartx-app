@@ -1,3 +1,15 @@
+const express = require("express");
+const cors = require("cors");
+
+const app = express();
+const port = process.env.PORT || 5000;
+
+app.use(cors());
+app.use(express.json());
+
+/* =========================
+   CATALOG
+========================= */
 const catalog = {
   Azure: {
     categories: {
@@ -70,3 +82,54 @@ const catalog = {
     }
   }
 };
+
+/* =========================
+   HEALTH
+========================= */
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+/* =========================
+   ROOT
+========================= */
+app.get("/", (req, res) => {
+  res.json({ message: "TanSmartX backend running" });
+});
+
+/* =========================
+   FIXED ROUTES (IMPORTANT)
+========================= */
+
+/* 🔥 THIS IS THE KEY FIX */
+app.get("/catalog", (req, res) => {
+  res.json(catalog);
+});
+
+app.post("/pricing", (req, res) => {
+  const { services = [] } = req.body;
+
+  const items = services.map((service) => ({
+    name: service.name,
+    monthly: service.starting_monthly || "RM 0"
+  }));
+
+  const total = services.reduce((sum, service) => {
+    const raw = service.starting_monthly || "";
+    const value = Number(String(raw).replace(/[^\d.]/g, ""));
+    return sum + (Number.isNaN(value) ? 0 : value);
+  }, 0);
+
+  res.json({
+    monthly: `RM ${total.toFixed(2)}`,
+    hourly: "Calculated",
+    items
+  });
+});
+
+/* =========================
+   START
+========================= */
+app.listen(port, "0.0.0.0", () => {
+  console.log(`🚀 TanSmartX backend running on port ${port}`);
+});
