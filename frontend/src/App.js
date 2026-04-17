@@ -23,8 +23,8 @@ export default function App() {
       .then((json) => {
         setCatalog(json);
 
-        const providers = Object.keys(json || {});
-        const firstProvider = providers[0] || "Azure";
+        const providerList = Object.keys(json || {});
+        const firstProvider = providerList[0] || "Azure";
         const firstCategory =
           Object.keys(json[firstProvider]?.categories || {})[0] || "Compute";
 
@@ -298,35 +298,45 @@ export default function App() {
               <div className="layer">
                 <div className="layer-title">Users</div>
                 {architecture.users.map((node) => (
-                  <div className="node" key={node}>{node}</div>
+                  <div className="node" key={node}>
+                    {node}
+                  </div>
                 ))}
               </div>
 
               <div className="layer">
                 <div className="layer-title">Edge / Security</div>
                 {architecture.edge.map((node) => (
-                  <div className="node" key={node}>{node}</div>
+                  <div className="node" key={node}>
+                    {node}
+                  </div>
                 ))}
               </div>
 
               <div className="layer">
                 <div className="layer-title">Network</div>
                 {architecture.network.map((node) => (
-                  <div className="node" key={node}>{node}</div>
+                  <div className="node" key={node}>
+                    {node}
+                  </div>
                 ))}
               </div>
 
               <div className="layer">
                 <div className="layer-title">Application Layer</div>
                 {architecture.app.map((node) => (
-                  <div className="node" key={node}>{node}</div>
+                  <div className="node" key={node}>
+                    {node}
+                  </div>
                 ))}
               </div>
 
               <div className="layer">
                 <div className="layer-title">Data Layer</div>
                 {architecture.data.map((node) => (
-                  <div className="node" key={node}>{node}</div>
+                  <div className="node" key={node}>
+                    {node}
+                  </div>
                 ))}
               </div>
             </div>
