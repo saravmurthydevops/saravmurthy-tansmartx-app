@@ -477,17 +477,51 @@ export default function App() {
           </div>
 
           <div className="card">
-            <div className="label">Architecture Preview</div>
-            <div className="diagram-enterprise">
-              <Layer title="Users" items={architecture.users} />
-              <Layer title="Edge / Security" items={architecture.edge} />
-              <Layer title="Network" items={architecture.network} />
-              <Layer title="Application Layer" items={architecture.app} />
-              <Layer title="Data Layer" items={architecture.data} />
-              <Layer title="Operations" items={architecture.ops} />
-            </div>
-          </div>
+  <div className="label">Architecture Preview</div>
 
+  <div className="diagram-enterprise">
+    <Layer title="Users" items={["End Users"]} />
+
+    <Layer
+      title="Edge / Security"
+      items={[
+        provider === "Azure"
+          ? "Front Door / App Gateway"
+          : provider === "AWS"
+          ? "CloudFront / ALB"
+          : "Cloud Load Balancer",
+      ]}
+    />
+
+    <Layer
+      title="Network"
+      items={[provider === "AWS" ? "VPC" : "VNet"]}
+    />
+
+    <Layer
+      title="Application Layer"
+      items={
+        selected.length
+          ? selected.map((s) => s.name)
+          : ["Application Tier"]
+      }
+    />
+
+    <Layer
+      title="Data Layer"
+      items={
+        selected.some((s) => s.name.includes("SQL"))
+          ? ["Database"]
+          : ["Data Services"]
+      }
+    />
+
+    <Layer
+      title="Operations"
+      items={["Monitoring", "Logging", "Backup"]}
+    />
+  </div>
+</div>
           <div className="card">
             <div className="label">Service Options</div>
             {!active ? (
@@ -571,3 +605,15 @@ const selectStyle = {
   color: "#e8f1ff",
   outline: "none",
 };
+function Layer({ title, items }) {
+  return (
+    <div className="layer">
+      <div className="layer-title">{title}</div>
+      {items.map((node) => (
+        <div className="node" key={node}>
+          {node}
+        </div>
+      ))}
+    </div>
+  );
+}
