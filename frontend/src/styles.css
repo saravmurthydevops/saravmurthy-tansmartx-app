@@ -28,6 +28,7 @@ body {
   top: 0;
   backdrop-filter: blur(12px);
   background: rgba(4, 17, 31, 0.78);
+  z-index: 10;
 }
 
 .topbar h1 {
@@ -49,6 +50,12 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.05);
   color: #fff;
+  outline: none;
+}
+
+.search:focus {
+  border-color: rgba(103, 232, 249, 0.45);
+  box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.1);
 }
 
 .hero {
@@ -68,6 +75,7 @@ body {
 .hero h2 {
   margin: 18px 0 8px;
   font-size: 42px;
+  line-height: 1.1;
 }
 
 .hero p {
@@ -114,6 +122,11 @@ body {
   border-radius: 999px;
   cursor: pointer;
   font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.tab:hover {
+  border-color: rgba(103, 232, 249, 0.35);
 }
 
 .tab.active {
@@ -143,6 +156,13 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 250px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.svc:hover {
+  transform: translateY(-2px);
+  border-color: rgba(103, 232, 249, 0.28);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
 }
 
 .svc.picked {
@@ -204,6 +224,12 @@ body {
   border: none;
   font-weight: 700;
   cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.ghost:hover,
+.primary:hover {
+  transform: translateY(-1px);
 }
 
 .ghost {
@@ -233,7 +259,7 @@ body {
 .diagram-enterprise {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   min-height: 220px;
   border-radius: 18px;
   background: #0b1730;
@@ -242,19 +268,23 @@ body {
 }
 
 .layer {
-  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 14px;
-  background: rgba(255, 255, 255, 0.03);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.02)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .layer-title {
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: 11px;
+  color: #67e8f9;
   margin-bottom: 10px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 700;
+  letter-spacing: 1.5px;
+  font-weight: 800;
 }
 
 .node {
@@ -264,10 +294,21 @@ body {
   padding: 10px 14px;
   margin: 6px 6px 0 0;
   border-radius: 12px;
-  background: rgba(103, 232, 249, 0.12);
-  border: 1px solid rgba(103, 232, 249, 0.22);
+  background: linear-gradient(
+    135deg,
+    rgba(103, 232, 249, 0.25),
+    rgba(56, 189, 248, 0.15)
+  );
+  border: 1px solid rgba(103, 232, 249, 0.35);
   font-weight: 700;
+  font-size: 13px;
   min-height: 42px;
+  transition: all 0.2s ease;
+}
+
+.node:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(103, 232, 249, 0.25);
 }
 
 .placeholder,
