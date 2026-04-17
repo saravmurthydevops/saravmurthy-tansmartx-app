@@ -20,10 +20,9 @@ export default function App() {
 
   const providers = useMemo(() => Object.keys(catalog || {}), [catalog]);
 
-  const categories = useMemo(
-    () => (catalog[provider] ? Object.keys(catalog[provider].categories || {}) : []),
-    [catalog, provider]
-  );
+  const categories = useMemo(() => {
+    return catalog[provider] ? Object.keys(catalog[provider].categories || {}) : [];
+  }, [catalog, provider]);
 
   const services = useMemo(() => {
     const list = catalog[provider]?.categories?.[category] || [];
@@ -113,7 +112,7 @@ export default function App() {
                   className={`tab ${provider === item ? "active" : ""}`}
                   onClick={() => {
                     setProvider(item);
-                    setCategory(Object.keys(catalog[item].categories || {})[0] || "Compute");
+                    setCategory(Object.keys(catalog[item]?.categories || {})[0] || "Compute");
                     setSelected([]);
                     setActive(null);
                   }}
@@ -191,28 +190,33 @@ export default function App() {
           <div className="card">
             <div className="label">Service Options</div>
             {!active ? (
-              <div className="placeholder">Select a service to view suggested options.</div>
+              <div className="placeholder">Select a service to view enterprise details.</div>
             ) : (
               <div className="options">
                 <div className="optTitle">
                   {provider} / {active.name}
                 </div>
+
                 <div className="opt">
                   <small>Description</small>
                   <strong>{active.description}</strong>
                 </div>
+
                 <div className="opt">
                   <small>Starting Monthly</small>
                   <strong>{active.starting_monthly || "N/A"}</strong>
                 </div>
+
                 <div className="opt">
                   <small>Starting Hourly</small>
                   <strong>{active.starting_hourly || "N/A"}</strong>
                 </div>
+
                 <div className="opt">
                   <small>Region</small>
                   <strong>{active.region || "N/A"}</strong>
                 </div>
+
                 <div className="opt">
                   <small>Tags</small>
                   <strong>{(active.tags || []).join(", ") || "N/A"}</strong>
